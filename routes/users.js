@@ -2,18 +2,18 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// Get all users
-router.get('/', async (req, res) => {
+// GET /users
+router.get('/', async (req, res, next) => {
   try {
     const result = await pool.query('SELECT * FROM users');
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch users' });
+    next(err);
   }
 });
 
-// Get user by ID
-router.get('/:id', async (req, res) => {
+// GET /users/:id
+router.get('/:id', async (req, res, next) => {
   const { id } = req.params;
   try {
     const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
@@ -22,18 +22,16 @@ router.get('/:id', async (req, res) => {
     }
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch user' });
+    next(err);
   }
 });
 
-// Create a new user
-router.post('/', async (req, res) => {
+// POST /users
+router.post('/', async (req, res, next) => {
   const { name, description } = req.body;
-
   if (!name || !description) {
     return res.status(400).json({ error: 'Name and description are required' });
   }
-
   try {
     const result = await pool.query(
       'INSERT INTO users (name, description) VALUES ($1, $2) RETURNING *',
@@ -41,7 +39,7 @@ router.post('/', async (req, res) => {
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to create user' });
+    next(err);
   }
 });
 
